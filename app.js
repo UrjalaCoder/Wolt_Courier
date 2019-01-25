@@ -46,7 +46,8 @@ function parseTimes() {
 
     let header = lines.shift().split(",");
 
-    // Create a 2D array of the times. -->
+    // Create a 2D array of the pickup events. -->
+    //
     let times = lines.map((el) => {
         let line = el.split(",");
         // Create a Date object and save it to the array.
@@ -56,7 +57,9 @@ function parseTimes() {
     });
 
     times.forEach((el) => {
-
+        // For each pickup event, store the time of the pickup and time that the pickup took.
+        // Use the 'data_object' object to store the events and use the location ID as the key.
+        
         let id = el[0];
 
         if(!data_object[id]) {
@@ -73,6 +76,8 @@ function parseTimes() {
 }
 
 function combineData(timeData, locationData) {
+
+    // Combine the time and location data to one data object.
     let data = {};
     Object.keys(locationData).forEach((id) => {
         data[id] = {'location': locationData[id], 'pickup_times': timeData[id]};
@@ -95,9 +100,17 @@ function isDateIn(targetDate, targetHour, date) {
 function getPickUpTimesIn(data, date, hour) {
     let resultData = {};
 
+    // For every location
     for(id in data) {
         let times = data[id]['pickup_times'];
+        // For every pickup from that location.
         for(let i = 0; i < times.length; i++) {
+            // If the pickup was done in the timeslot in question.
+            // Add the pickup to the 'resultData' object.
+            // Object has an array associated with every ID. The array stores the pickup events.
+            /*
+            *   ID: {[{'time_date': time of the pickup, 'pickup_time': time that the pickup took}, ...]}
+            */
             if(isDateIn(date, hour, times[i]['time_date'])) {
                 if(!resultData[id]) {
                     resultData[id] = [times[i]];
@@ -113,7 +126,10 @@ function getPickUpTimesIn(data, date, hour) {
 
 function calculateMedian(arr) {
     let array = arr.slice();
+
+    // Sort the array in increasing order.
     array.sort((a, b) => a - b);
+
     let half = Math.floor(arr.length / 2.0);
     if(arr.length % 2 !== 0) {
         return array[half];
@@ -125,16 +141,28 @@ function calculateMedian(arr) {
 function getMedian(data, date, hour) {
     let times = {};
     let results = getPickUpTimesIn(data, date, hour);
+
+    // For every pickup location in that timeslot.
     for(id in results) {
+        // For every pickup done for that location.
+        // Store the time that the pickup took to the 'times' object.
+        /*
+        *   ID: {[time it took for a pickup, another time, ...]}
+        */
         for(time of results[id]) {
             if(!times[id]) {
                 times[id] = [];
             }
-            times[id].push(time['pickup_time'])
+            times[id].push(time['pickup_time']);
         }
     }
-    console.log(times);
+
     let medians = {};
+    // For every location
+    // Calculate the median pickup time and store in the 'medians' object.
+    /*
+    *   ID: {median pickup time}
+    */
     for(key in times) {
         medians[key] = calculateMedian(times[key]);
     }
@@ -142,11 +170,10 @@ function getMedian(data, date, hour) {
     return medians;
 }
 
-// Main function -->
-(function() {
+function main() {
     let times = parseTimes();
     let locations = parseLocations();
     let data = combineData(times, locations);
-    let testDates = getMedian(data, new Date(2019, 0, 8), 15);
-    console.log(testDates);
-})();
+}
+
+main();
