@@ -1,14 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// Get the filenames -->
-const filename_locations = process.argv[2];
-const filename_times = process.argv[3];
-
-// data object to hold the information -->
-let data = {};
-
-
 // Object to store the location and pickup data for one city.
 class City {
     constructor(locationName, locationFile, timeFile) {
@@ -22,6 +14,89 @@ class City {
         let locationData = parseLocations(this.locationFilename);
         let pickupData = parseTimes(this.pickupFilename);
         return combineData(pickupData, locationData);
+    }
+
+    // Returns true if the pickup event is in between the starting and end hours on the specific date.
+    isIncluded(date, startingHour, endHour, pickup) {
+        let startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startingHour);
+        let endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour);
+        let pickupStamp = pickup['timestamp'];
+        // console.log(pickup);
+        // Return if the startDate is earlier than pickup AND pickup is earlier than endDate AND startDate is earlier than endDate.
+        return (startDate <= pickupStamp && pickupStamp <= endDate && startDate < endDate);
+    }
+
+    // Get the pickup event for each location filtered by time.
+    getDataBetween(date, startingHour, endHour) {
+        let result = {};
+        // For every location in data
+        for(let key in this.data) {
+            // For every pickup event in this location.
+            for(let pickup of this.data[key]['pickup_times']) {
+                if(this.isIncluded(date, startingHour, endHour, pickup)) {
+                    // If the result object has no array for that key yet, create it.
+                    if(!result[key]) {
+                        result[key] = [];
+                    }
+                    // Add the pickup event to the 'result' object.
+                    result[key].push(pickup);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    calculateMedian(arr) {
+        // Sort the array
+        arr.sort((a, b) => a-b);
+
+        // Get the half point
+        let half = Math.floor(arr.length / 2.0);
+
+        // If NOT divisible by 2.
+        // Return the middle element of the sorted list.
+        if(arr % 2) {
+            return arr[half]
+        } else {
+            return ((arr[half - 1] + arr[half]) * 0.5);
+        }
+    }
+
+
+    // Stores the median times to the filePath
+    store(filePath, data) {
+        let lines = [];
+        for(let key in data) {
+            lines.push(`${key},${data[key]}`);
+        }
+
+        let writeString = lines.join("\r\n");
+        fs.writeFileSync(path.join(__dirname, filePath), writeString, 'utf8');
+    }
+
+    getMedianBetween(date, startingHour, endHour) {
+        // Get the pickup data between the start and end hours.
+        let pickups = this.getDataBetween(date, startingHour, endHour);
+        let times = {};
+        // console.log(pickups);
+        // For every location.
+        // Add the pickup times to the 'times' object.
+        for(let key in pickups) {
+            for(let event of pickups[key]) {
+                if(!times[key]) {
+                    times[key] = [];
+                }
+                times[key].push(event['pickup_time']);
+            }
+        }
+        let medians = {};
+        // For every location, calculate the median.
+        for(let key in times) {
+            medians[key] = this.calculateMedian(times[key]);
+        }
+
+        return medians;
     }
 }
 
@@ -100,3 +175,5 @@ function combineData(timeData, locationData) {
     });
     return data;
 }
+
+module.exports = City;
