@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Object to store the location and pickup data for one city.
+// Includes functions to get the pickup data at specific hours.
 class City {
     constructor(locationName, locationFile, timeFile) {
         this.name = locationName;
@@ -10,6 +11,8 @@ class City {
         this.data = this.initializeData();
     }
 
+    // Function that initializes the parsing of the data.
+    // Returns the combined data object using combineData helper function.
     initializeData() {
         let locationData = parseLocations(this.locationFilename);
         let pickupData = parseTimes(this.pickupFilename);
@@ -31,7 +34,6 @@ class City {
 
     // Get the pickup event for each location filtered by time.
     getDataBetween(date, startingHour, endHour) {
-
         let result = {};
         // For every location in data
         for(let key in this.data) {
@@ -51,6 +53,7 @@ class City {
         return result;
     }
 
+    // Calculate the median element of any Number array.
     calculateMedian(arr) {
         // Sort the array
         arr.sort((a, b) => a-b);
@@ -68,7 +71,8 @@ class City {
     }
 
 
-    // Stores the median times to the filePath
+    // Stores the median times to a file located in filePath.
+    // used by app.js file to store the result.
     store(filePath, data) {
         let lines = ["location_id,median_pickup_time"];
         for(let key in data) {
@@ -79,12 +83,11 @@ class City {
         fs.writeFileSync(path.join(__dirname, filePath), writeString, 'utf8');
     }
 
+    // Main function for getting the data
     getMedianBetween(date, startingHour, endHour) {
         // Get the pickup data between the start and end hours.
-
         let pickups = this.getDataBetween(date, startingHour, endHour);
         let times = {};
-        // console.log(pickups);
         // For every location.
         // Add the pickup times to the 'times' object.
         for(let key in pickups) {
@@ -106,6 +109,7 @@ class City {
 }
 
 // Helper functions for loading and parsing the data from CSV files.
+// helper for parsing the location data from file.
 function parseLocations(filePath) {
     let lines = loadFile(filePath, "\r\n");
     let data_object = {};
@@ -138,6 +142,7 @@ function loadFile(filePath, separator) {
     return data.split(separator).filter((line) => { return (line !== ""); });
 }
 
+// Helper for parsing the pickup times from a file.
 function parseTimes(filePath) {
     let lines = loadFile(filePath, "\r\n");
     let data_object = {};
@@ -172,6 +177,8 @@ function parseTimes(filePath) {
     return data_object;
 }
 
+// Function used to combine data from pickups and locations.
+// Takes the location and pickup_time data as parameters.
 function combineData(timeData, locationData) {
     // Combine the time and location data to one data object.
     let data = {};

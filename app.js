@@ -7,10 +7,19 @@ const readLine = require('readline').createInterface({
   output: process.stdout
 });
 
-// Parses the command line arguments.
-// Returns null if problem otherwise an Array [locationFilename, pickupFilename]
-// node app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}
-// node app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]
+/*
+
+Main file for using the application.
+USAGE:
+- Get data:
+    node app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}
+- Set the data files of a city
+    node app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]
+- Remove a city from config.
+    node app.js remove [CITY_NAME]
+
+*/
+
 
 function readConfig() {
     return JSON.parse(fs.readFileSync(configFilename, "utf8"));
