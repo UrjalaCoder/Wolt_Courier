@@ -20,6 +20,9 @@ class City {
     isIncluded(date, startingHour, endHour, pickup) {
         let startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startingHour);
         let endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour);
+        // if(startHour === 0) {
+        //     startDate.setDate(startDate.getDate() - 1);
+        // }
         let pickupStamp = pickup['timestamp'];
         // console.log(pickup);
         // Return if the startDate is earlier than pickup AND pickup is earlier than endDate AND startDate is earlier than endDate.
@@ -28,6 +31,7 @@ class City {
 
     // Get the pickup event for each location filtered by time.
     getDataBetween(date, startingHour, endHour) {
+
         let result = {};
         // For every location in data
         for(let key in this.data) {
@@ -66,7 +70,7 @@ class City {
 
     // Stores the median times to the filePath
     store(filePath, data) {
-        let lines = [];
+        let lines = ["location_id,median_pickup_time"];
         for(let key in data) {
             lines.push(`${key},${data[key]}`);
         }
@@ -77,6 +81,7 @@ class City {
 
     getMedianBetween(date, startingHour, endHour) {
         // Get the pickup data between the start and end hours.
+
         let pickups = this.getDataBetween(date, startingHour, endHour);
         let times = {};
         // console.log(pickups);
