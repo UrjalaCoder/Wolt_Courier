@@ -32,6 +32,18 @@ class City {
         return (startDate <= pickupStamp && pickupStamp <= endDate && startDate < endDate);
     }
 
+    // Get the location data of the id
+    getLocation(id) {
+        let result = "";
+        if(!this.data[id]) {
+            result = "[UNKNOWN]";
+        } else {
+            result = this.data[id]['location']
+        }
+
+        return result;
+    }
+
     // Get the pickup event for each location filtered by time.
     getDataBetween(date, startingHour, endHour) {
         let result = {};

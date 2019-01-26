@@ -11,13 +11,14 @@ const readLine = require('readline').createInterface({
 
 Main file for using the application.
 USAGE:
-- Get data:
+- Get pickup data:
     node app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}
+- Get location data:
+    node app.js location [CITY_NAME] [LOCATION_INDEX]
 - Set the data files of a city
     node app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]
 - Remove a city from config.
     node app.js remove [CITY_NAME]
-
 */
 
 
@@ -37,6 +38,24 @@ function parseDate(dateString) {
 
     // Turn the numbers into a Date object. Remember that months start at 0.
     return new Date(elements[0], elements[1] - 1, elements[2]);
+}
+
+function getLocation(callback) {
+    let cityName = process.argv[3];
+    let id = Number(process.argv[4]);
+
+    if(!id) {
+        callback("No ID provided!");
+    }
+
+    let config = readConfig();
+
+    if(!config[cityName]) {
+        callback("UNKNOWN city!");
+    }
+
+    let city = new City(cityName, config[cityName]['locationFile'], config[cityName]['pickupFile']);
+    callback(city.getLocation(id));
 }
 
 function getData(callback) {
@@ -61,11 +80,12 @@ function getData(callback) {
     if(process.argv.length === 5) {
         resultData = city.getMedianBetween(date, 0, 24);
     } else if(process.argv.length === 6) {
-        let startHour = Number(process.argv[4]);
+        let startHour = Number(process.argv[5]);
         resultData = city.getMedianBetween(date, startHour, 24);
     } else if(process.argv.length === 7) {
-        let startHour = Number(process.argv[4]);
-        let endHour = Number(process.argv[5]);
+        let startHour = Number(process.argv[5]);
+        let endHour = Number(process.argv[6]);
+        console.log(startHour);
         resultData = city.getMedianBetween(date, startHour, endHour);
     } else {
         // Invalid arguments!
@@ -129,7 +149,13 @@ function main() {
             if(err) console.log(err);
             process.exit();
         });
-    } else if(verb === "store") {
+    } else if(verb === "location") {
+        getLocation((msg) => {
+            console.log(msg);
+            process.exit();
+        })
+    }
+    else if(verb === "store") {
         storeFile((err) => {
             if(err) console.log(err);
             process.exit()
