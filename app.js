@@ -137,8 +137,11 @@ function storeFile(callback) {
 }
 
 function printUsage() {
-    console.log("For getting information: node app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}");
-    console.log("For storing the files under a city name: node app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]");
+    console.log("USAGE:")
+    console.log("For getting pickup time information: \nnode app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}\n");
+    console.log("For getting location information: \nnode app.js location [CITY_NAME] [LOCATION_ID]\n");
+    console.log("For storing the files for a city in config: \nnode app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]\n");
+    console.log("For removing a city from config: \nnode app.js remove [CITY_NAME]\n");
     return;
 }
 
