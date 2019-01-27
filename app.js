@@ -2,26 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const City = require('./parser.js');
 const configFilename = path.join(__dirname, "config.json");
-const readLine = require('readline').createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
 
 /*
-
 Main file for using the application.
-USAGE:
-- Get pickup data:
-    node app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}
-- Get location data:
-    node app.js location [CITY_NAME] [LOCATION_INDEX]
-- Set the data files of a city
-    node app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]
-- Remove a city from config.
-    node app.js remove [CITY_NAME]
 */
 
-
+// Because the config file is usually very small we can read and write it multiple times without significant performance loss.
 function readConfig() {
     return JSON.parse(fs.readFileSync(configFilename, "utf8"));
 }
@@ -40,6 +26,7 @@ function parseDate(dateString) {
     return new Date(elements[0], elements[1] - 1, elements[2]);
 }
 
+// Function used to get a location for a specific index.
 function getLocation(callback) {
     let cityName = process.argv[3];
     let id = Number(process.argv[4]);
@@ -54,13 +41,20 @@ function getLocation(callback) {
         callback("UNKNOWN city!");
     }
 
-    let city = new City(cityName, config[cityName]['locationFile'], config[cityName]['pickupFile']);
+    let city = City.fromData(cityName, config[cityName]);
     callback(city.getLocation(id));
 }
 
+// Function for getting the data from a city.
 function getData(callback) {
     let cityName = process.argv[3];
     let date = parseDate(process.argv[4]);
+    let filename = process.argv[5];
+
+    // If the filename doesn't end in '.csv', terminate.
+    if(filename.split(".")[1] !== "csv") {
+        callback("Invalid filename!");
+    }
 
     if(!date) {
         callback("Invalid date!");
@@ -71,34 +65,31 @@ function getData(callback) {
     // First check that the city is in the config.
     // Return false if not.
     if(Object.keys(config).indexOf(cityName) === -1) {
-        callback("Invalid args!");
+        callback("Unkown city!");
         return;
     }
-    // Create a new 'City' instance.
-    let city = new City(cityName, config[cityName]['locationFile'], config[cityName]['pickupFile']);
+    // Create a new 'City' instance using the stored data.
+    let city = City.fromData(cityName, config[cityName]);
+    // console.log(city.data);
     let resultData = {};
-    if(process.argv.length === 5) {
+    if(process.argv.length === 6) {
         resultData = city.getMedianBetween(date, 0, 24);
-    } else if(process.argv.length === 6) {
-        let startHour = Number(process.argv[5]);
-        resultData = city.getMedianBetween(date, startHour, 24);
     } else if(process.argv.length === 7) {
-        let startHour = Number(process.argv[5]);
-        let endHour = Number(process.argv[6]);
-        console.log(startHour);
+        let startHour = Number(process.argv[6]);
+        resultData = city.getMedianBetween(date, startHour, 24);
+    } else if(process.argv.length === 8) {
+        let startHour = Number(process.argv[6]);
+        let endHour = Number(process.argv[7]);
         resultData = city.getMedianBetween(date, startHour, endHour);
     } else {
         // Invalid arguments!
         callback("Invalid args!");
         return;
     }
-
-    // Store the data into a file.
-    // First ask the user where the data should be stored.
-    readLine.question("Store filename:", (filename) => {
-        city.store(filename, resultData);
-        callback(null);
-    });
+    // Finally
+    // Store the data in a file using the 'store' function of 'city' object.
+    city.store(process.argv[5], resultData);
+    callback(null);
 }
 
 function removeConfig(callback) {
@@ -114,6 +105,11 @@ function removeConfig(callback) {
     callback(null);
 }
 
+function listConfig(callback) {
+    callback("Cities in config:\n" + Object.keys(readConfig()).join("\n"));
+}
+
+// File used to store a new city field in config.
 function storeFile(callback) {
     let cityName = process.argv[3];
     let locationsFile = process.argv[4];
@@ -128,24 +124,28 @@ function storeFile(callback) {
     let oldObject = JSON.parse(rawData);
 
     // Add new item.
-    oldObject[cityName] = {'locationFile': locationsFile, 'pickupFile': pickupsFile};
+    // Use the City constructor for parsing the data.
+    let city = new City(cityName, locationsFile, pickupsFile);
+    oldObject[cityName] = city.data;
 
     // Write the new data.
     fs.writeFileSync(configFilename, JSON.stringify(oldObject), 'utf8');
-
     callback(null);
 }
 
 function printUsage() {
     console.log("USAGE:")
-    console.log("For getting pickup time information: \nnode app.js get [CITY_NAME] [DATE] {STARTHOUR} {ENDHOUR}\n");
+    console.log("For getting pickup time information: \nnode app.js get [CITY_NAME] [DATE] [RESULT_FILENAME] {STARTHOUR} {ENDHOUR}\n");
     console.log("For getting location information: \nnode app.js location [CITY_NAME] [LOCATION_ID]\n");
     console.log("For storing the files for a city in config: \nnode app.js store [CITY_NAME] [LOCATIONS_FILE] [PICKUPS_FILE]\n");
     console.log("For removing a city from config: \nnode app.js remove [CITY_NAME]\n");
+    console.log("For listing the cities in config: \nnode app.js list\n");
     return;
 }
 
 function main() {
+
+    // Parse the desired functionality from command line args.
     let verb = process.argv[2];
     if(verb === "get") {
         getData((err) => {
@@ -169,6 +169,11 @@ function main() {
             if(err) console.log(err);
             process.exit();
         });
+    } else if(verb === "list") {
+        listConfig((msg) => {
+            console.log(msg);
+            process.exit();
+        })
     } else {
         printUsage();
         process.exit();

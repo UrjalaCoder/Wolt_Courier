@@ -4,11 +4,41 @@ const path = require('path');
 // Object to store the location and pickup data for one city.
 // Includes functions to get the pickup data at specific hours.
 class City {
+
+    // Default contructor is used to create a new dataset.
     constructor(locationName, locationFile, timeFile) {
         this.name = locationName;
         this.locationFilename = locationFile;
         this.pickupFilename = timeFile;
-        this.data = this.initializeData();
+
+        // IF the constuctor is called without files, set the 'data' field to an empty object.
+        // 'data' attribute MUST be filled later with city.data = ... for any of the other methods to work.
+        if(!this.locationFilename && !this.pickupFilename) {
+            this.data = {};
+        } else {
+            this.data = this.initializeData();
+        }
+    }
+
+    // This static function is used to create a city with a specific dataset.
+    static fromData(cityName, data) {
+        let city = new City(cityName);
+        let objectData = {};
+
+        // The timestamps of the pickups are now strings because of JSON conversion.
+        // Converting them to actual dates...
+
+        for(let key in data) {
+            objectData[key] = {'location': data[key]['location']};
+            let pickups = data[key]['pickup_times'].map((pickup) => {
+                let date = new Date(pickup['timestamp']);
+                return {'timestamp': date, 'pickup_time': pickup['pickup_time']};
+            });
+            objectData[key]['pickup_times'] = pickups;
+        }
+
+        city.data = objectData;
+        return city;
     }
 
     // Function that initializes the parsing of the data.
@@ -26,10 +56,14 @@ class City {
         // if(startHour === 0) {
         //     startDate.setDate(startDate.getDate() - 1);
         // }
+
+        // console.log(endDate.toString());
+        // console.log();
         let pickupStamp = pickup['timestamp'];
         // console.log(pickup);
         // Return if the startDate is earlier than pickup AND pickup is earlier than endDate AND startDate is earlier than endDate.
-        return (startDate <= pickupStamp && pickupStamp <= endDate && startDate < endDate);
+        let result = (startDate <= pickupStamp && pickupStamp <= endDate && startDate < endDate);
+        return result;
     }
 
     // Get the location data of the id
@@ -115,7 +149,6 @@ class City {
         for(let key in times) {
             medians[key] = this.calculateMedian(times[key]);
         }
-
         return medians;
     }
 }
