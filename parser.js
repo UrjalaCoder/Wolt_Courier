@@ -27,7 +27,6 @@ class City {
 
         // The timestamps of the pickups are now strings because of JSON conversion.
         // Converting them to actual dates...
-
         for(let key in data) {
             objectData[key] = {'location': data[key]['location']};
             let pickups = data[key]['pickup_times'].map((pickup) => {
@@ -103,13 +102,12 @@ class City {
     calculateMedian(arr) {
         // Sort the array
         arr.sort((a, b) => a-b);
-
         // Get the half point
         let half = Math.floor(arr.length / 2.0);
 
         // If NOT divisible by 2.
         // Return the middle element of the sorted list.
-        if(arr % 2) {
+        if(arr.length % 2) {
             return arr[half]
         } else {
             return ((arr[half - 1] + arr[half]) * 0.5);
