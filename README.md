@@ -1,8 +1,8 @@
 # Wolt_Courier
 
 ## About
-This is a project made for the 2019 engineering intern job. The program is a command line program written using javascript and the NodeJS javascript engine.
-It calculates the MEDIAN pickup time for the different locations during a specific hour. Program stores them in a CSV file.
+This is a project made for the **Wolt 2019 engineering intern** job. The program is a command line program written using Javascript and the NodeJS javascript engine.
+It calculates the median pickup time for the different locations during a specific hour. Program stores them in a CSV file.
 
 ## Functionality
 The main command for using the program is `node app.js [COMMAND] [ARGS...]`. The commands and args are:
@@ -23,7 +23,7 @@ The main command for using the program is `node app.js [COMMAND] [ARGS...]`. The
 * `remove [CITYNAME]` This command removes the city from config. Arguments are:
   * `[CITYNAME]` The config name for the city you want to remove.
   
-**The format for location and pickup files is the one specified on your website.**
+**The format for location and pickup files is the same as for the files Wolt provided.**
 
 ### Example
 Usage example. I have these files in my root directory: `pickup_times.csv` and `locations.csv`. They are linked to Helsinki.
